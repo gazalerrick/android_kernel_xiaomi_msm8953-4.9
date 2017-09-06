@@ -2920,7 +2920,36 @@ static inline void ufshcd_prepare_utp_nop_upiu(struct ufshcd_lrb *lrbp)
 }
 
 /**
- * ufshcd_compose_upiu - form UFS Protocol Information Unit(UPIU)
+ * ufshcd_comp_devman_upiu - UFS Protocol Information Unit(UPIU)
+ *			     for Device Management Purposes
+ * @hba - per adapter instance
+ * @lrb - pointer to local reference block
+ */
+static int ufshcd_comp_devman_upiu(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
+{
+	u32 upiu_flags;
+	int ret = 0;
+
+	if ((hba->ufs_version == UFSHCI_VERSION_10) ||
+	    (hba->ufs_version == UFSHCI_VERSION_11))
+		lrbp->command_type = UTP_CMD_TYPE_DEV_MANAGE;
+	else
+		lrbp->command_type = UTP_CMD_TYPE_UFS_STORAGE;
+
+	ufshcd_prepare_req_desc_hdr(lrbp, &upiu_flags, DMA_NONE);
+	if (hba->dev_cmd.type == DEV_CMD_TYPE_QUERY)
+		ufshcd_prepare_utp_query_req_upiu(hba, lrbp, upiu_flags);
+	else if (hba->dev_cmd.type == DEV_CMD_TYPE_NOP)
+		ufshcd_prepare_utp_nop_upiu(lrbp);
+	else
+		ret = -EINVAL;
+
+	return ret;
+}
+
+/**
+ * ufshcd_comp_scsi_upiu - UFS Protocol Information Unit(UPIU)
+ *			   for SCSI Purposes
  * @hba - per adapter instance
  * @lrb - pointer to local reference block
  */
@@ -2929,39 +2958,19 @@ static int ufshcd_compose_upiu(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
 	u32 upiu_flags;
 	int ret = 0;
 
-	switch (lrbp->command_type) {
-	case UTP_CMD_TYPE_SCSI:
-		if (likely(lrbp->cmd)) {
-			ret = ufshcd_prepare_req_desc_hdr(hba, lrbp,
-				&upiu_flags, lrbp->cmd->sc_data_direction);
-			ufshcd_prepare_utp_scsi_cmd_upiu(lrbp, upiu_flags);
-		} else {
-			ret = -EINVAL;
-		}
-		break;
-	case UTP_CMD_TYPE_DEV_MANAGE:
-		ret = ufshcd_prepare_req_desc_hdr(hba, lrbp, &upiu_flags,
-			DMA_NONE);
-		if (hba->dev_cmd.type == DEV_CMD_TYPE_QUERY)
-			ufshcd_prepare_utp_query_req_upiu(
-					hba, lrbp, upiu_flags);
-		else if (hba->dev_cmd.type == DEV_CMD_TYPE_NOP)
-			ufshcd_prepare_utp_nop_upiu(lrbp);
-		else
-			ret = -EINVAL;
-		break;
-	case UTP_CMD_TYPE_UFS:
-		/* For UFS native command implementation */
-		ret = -ENOTSUPP;
-		dev_err(hba->dev, "%s: UFS native command are not supported\n",
-			__func__);
-		break;
-	default:
-		ret = -ENOTSUPP;
-		dev_err(hba->dev, "%s: unknown command type: 0x%x\n",
-				__func__, lrbp->command_type);
-		break;
-	} /* end of switch */
+	if ((hba->ufs_version == UFSHCI_VERSION_10) ||
+	    (hba->ufs_version == UFSHCI_VERSION_11))
+		lrbp->command_type = UTP_CMD_TYPE_SCSI;
+	else
+		lrbp->command_type = UTP_CMD_TYPE_UFS_STORAGE;
+
+	if (likely(lrbp->cmd)) {
+		ufshcd_prepare_req_desc_hdr(lrbp, &upiu_flags,
+						lrbp->cmd->sc_data_direction);
+		ufshcd_prepare_utp_scsi_cmd_upiu(lrbp, upiu_flags);
+	} else {
+		ret = -EINVAL;
+	}
 
 	return ret;
 }
