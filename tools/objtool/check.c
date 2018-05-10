@@ -904,6 +904,27 @@ static struct rela *find_switch_table(struct objtool_file *file,
 	struct instruction *orig_insn = insn;
 	unsigned long table_offset;
 
+	text_rela = find_rela_by_dest_range(insn->sec, insn->offset, insn->len);
+	if (text_rela && text_rela->sym == file->rodata->sym &&
+	    !find_symbol_containing(file->rodata, text_rela->addend)) {
+
+		/* case 1 */
+		rodata_rela = find_rela_by_dest(file->rodata,
+						text_rela->addend);
+		if (rodata_rela)
+			return rodata_rela;
+
+		/* case 2 */
+		rodata_rela = find_rela_by_dest(file->rodata,
+						text_rela->addend + 4);
+		if (!rodata_rela)
+			return NULL;
+
+		file->ignore_unreachables = true;
+		return rodata_rela;
+	}
+
+	/* case 3 */
 	/*
 	 * Backward search using the @first_jump_src links, these help avoid
 	 * much of the 'in between' code. Which avoids us getting confused by
