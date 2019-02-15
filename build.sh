@@ -2,6 +2,7 @@
 # Copyright (C) 2018 Abubakar Yagob (blacksuan19)
 # Copyright (C) 2018 Rama Bondan Prakoso (rama982)
 # SPDX-License-Identifier: GPL-3.0-or-later
+# Credit for @rama982
 
 # Color
 green='\033[0;32m'
