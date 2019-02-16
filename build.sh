@@ -2,7 +2,7 @@
 # Copyright (C) 2018 Abubakar Yagob (blacksuan19)
 # Copyright (C) 2018 Rama Bondan Prakoso (rama982)
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Credit for @rama982
+# @alanndz
 
 # Color
 green='\033[0;32m'
@@ -49,13 +49,34 @@ export KBUILD_BUILD_HOST="Ubuntu18.04-Trial"
 # echo -e "---------------------------------------------------------------------";
 # echo -e "---------------------------------------------------------------------";
 
+# Telegram Push to Bot
+# Main Setup
+TELE=~/telegram/telegram
+TELE_TOKEN=799058967:AAHdBKLP8cjxLXUCxeBiWmEOoY8kZHvbiQo
+TELE_ID=671339354
+
+# Main Telegram
+function sendStart() {
+	# echo e "New Build Started at $DATE\naLN Kernel Build Start." |  $TELE -t $TELE_TOKEN -c $TELE_ID -
+	$TELE -t $TELE_TOKEN -c $TELE_ID "--aLN Kernel New Build--"$'\n'"Started at $DATE"$'\n'"Started on $(hostname)"$'\n'"Branch : $(git branch)"$'\n'"Commit : $(git log --pretty=format:'"%h : %s"' -1)"
+}
+	
+function sendInfo() {
+	$TELE -t $TELE_TOKEN -c $TELE_ID "${1}"
+}
+
+function sendFile() {
+	$TELE -t $TELE_TOKEN -c $TELE_ID -f $ZIP_DIR/aLN*.zip
+}
+
 # Main script
 while true; do
 	echo -e "\n[1] Build Vince AOSP Kernel"
 	echo -e "[2] Regenerate defconfig"
 	echo -e "[3] Source cleanup"
 	echo -e "[4] Create flashable zip"
-	echo -e "[5] Quit"
+	echo -e "[5] Send Kernel to Bot"
+	echo -e "[6] Quit"
 	echo -ne "\n(i) Please enter a choice[1-6]: "
 	
 	read choice
@@ -66,6 +87,8 @@ while true; do
 	
 		#echo -e "\n(i) Cloning toolcahins if folder not exist..."
 		#git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 --depth=1 /../toolchains
+		
+		sendStart
 	
 		echo -e ""
 		make  O=out $CONFIG $THREAD &>/dev/null
@@ -94,6 +117,7 @@ while true; do
 	
 		if ! [ -a $KERN_IMG ]; then
 			echo -e "\n(!) Kernel compilation failed, See buildlog to fix errors"
+			sendInfo "$(echo -e "Kernel compilation failed, See buildlog to fix errors")"
 			echo -e "#######################################################################"
 			exit 1
 		fi
@@ -106,6 +130,7 @@ while true; do
 		echo -e "#######################################################################"
 
 		echo -e "(i) Total time elapsed: $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) seconds."
+		sendInfo "$(echo -e "(i) Total time elapsed: $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) seconds.")"
 
 		echo -e "#######################################################################"
 	fi
@@ -148,6 +173,10 @@ while true; do
 	fi
 	
 	if [ "$choice" == "5" ]; then
+		sendFile
+	fi 
+	
+	if [ "$choice" == "6" ]; then
 		exit 
 	fi
 
