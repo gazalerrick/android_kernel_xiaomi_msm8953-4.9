@@ -87,7 +87,7 @@ done
 	
 if ! [ -a $KERN_IMG ]; then
 	echo -e "\n(!) Kernel compilation failed, See buildlog to fix errors"
-	sendInfo "$(echo -e "Kernel compilation failed.")"
+	sendInfo "$(echo -e "Kernel compilation failed!!!")"
 	echo -e "#######################################################################"
 	exit 1
 fi
@@ -100,7 +100,19 @@ echo -e "\n(i) Image-dtb compiled successfully."
 echo -e "#######################################################################"
 
 echo -e "(i) Total time elapsed: $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) seconds."
-sendFile
-sendInfo "$(echo -e "(i) Total time elapsed: $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) seconds.")"
+
+# Building Zip File
+echo -e "#######################################################################"
+cd $ZIP_DIR
+make clean &>/dev/null
+cp $KERN_IMG $ZIP_DIR/zImage
+make normal &>/dev/null
+cd ..
+
+echo -e "(i) Flashable zip generated under $ZIP_DIR."
 
 echo -e "#######################################################################"
+
+# Send to Telegram
+sendFile
+sendInfo "$(echo -e "(i) Total time elapsed: $(($DIFF / 60)) minute(s) and $(($DIFF % 60)) seconds.")"
