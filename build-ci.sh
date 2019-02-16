@@ -22,11 +22,11 @@ export IMG=$PWD/out/arch/arm64/boot/Image.gz
 export DTB=$PWD/out/arch/arm64/boot/dts/qcom/msm8953-qrd-sku3-vince.dtb
 
 if [ ! -d "$CROSS_COMPILE" ]; then
-  mkdir $TOOL_DIR
+  #mkdir $TOOL_DIR
   git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 ../ToolDragon9/Toolchain --depth=1
 fi
 if [ ! -d "$CC" ]; then
-  mkdir $TOOL_DIR
+  #mkdir $TOOL_DIR
   git clone https://github.com/nibaji/DragonTC-9.0 --depth=1 ../ToolDragon9/Clang
 fi
 #git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 Toolchain --depth=1
