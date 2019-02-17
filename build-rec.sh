@@ -44,8 +44,17 @@ TELE_TOKEN=799058967:AAHdBKLP8cjxLXUCxeBiWmEOoY8kZHvbiQo
 TELE_ID=671339354
 
 # Main Telegram
+#function sendInfo() {
+# $TELE -t $TELE_TOKEN -c $TELE_ID "${1}"
+#}
+
 function sendInfo() {
-	$TELE -t $TELE_TOKEN -c $TELE_ID "${1}"
+	"${TELEGRAM}" -t ${TELE_TOKEN} -c ${TELE_ID} -H \
+		"$(
+			for POST in "${@}"; do
+				echo "${POST}"
+			done
+		)"
 }
 
 function sendFile() {
