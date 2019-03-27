@@ -98,6 +98,8 @@ struct clk_osm {
 	u32 prev_cycle_counter;
 	u32 max_core_count;
 	u32 mx_turbo_freq;
+	ktime_t last_update;
+	struct mutex update_lock;
 };
 
 static bool is_sdm845v1;
@@ -210,7 +212,7 @@ static int clk_cpu_set_rate(struct clk_hw *hw, unsigned long rate,
 	struct clk_osm *c = to_clk_osm(hw);
 	struct clk_hw *p_hw = clk_hw_get_parent(hw);
 	struct clk_osm *parent = to_clk_osm(p_hw);
-	int core_num, index = 0;
+	int core_num, index;
 
 	if (!c || !parent)
 		return -EINVAL;
@@ -718,9 +720,8 @@ osm_set_index(struct clk_osm *c, unsigned int index)
 
 	/* The old rate needs time to settle before it can be changed again */
 	delta_us = ktime_us_delta(ktime_get_boottime(), parent->last_update);
-	if (delta_us < RATE_LIMIT_US)
-		usleep_range(RATE_LIMIT_US - delta_us,
-			     (RATE_LIMIT_US + 1000) - delta_us);
+	if (delta_us < 10000)
+		usleep_range(10000 - delta_us, 11000 - delta_us);
 	parent->last_update = ktime_get_boottime();
 
 	clk_set_rate(c->hw.clk, clk_round_rate(c->hw.clk, rate));
