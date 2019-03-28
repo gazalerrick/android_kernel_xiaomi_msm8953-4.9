@@ -43,6 +43,7 @@
 
 #define OSM_INIT_RATE			300000000UL
 #define XO_RATE				19200000UL
+#define RATE_LIMIT_US			10000
 #define OSM_TABLE_SIZE			40
 #define SINGLE_CORE			1
 #define MAX_CLUSTER_CNT			3
@@ -705,6 +706,23 @@ osm_set_index(struct clk_osm *c, unsigned int index)
 	if (!rate)
 		return;
 
+	core_num = parent->per_core_dcvs ? c->core_num : 0;
+
+	/* Skip the update if the current rate is the same as the new one */
+	mutex_lock(&parent->update_lock);
+	current_index = clk_osm_read_reg(parent,
+				DCVS_PERF_STATE_DESIRED_REG(core_num,
+							is_sdm845v1));
+	if (current_index == index)
+		goto unlock;
+
+	/* The old rate needs time to settle before it can be changed again */
+	delta_us = ktime_us_delta(ktime_get_boottime(), parent->last_update);
+	if (delta_us < RATE_LIMIT_US)
+		usleep_range(RATE_LIMIT_US - delta_us,
+			     (RATE_LIMIT_US + 1000) - delta_us);
+	parent->last_update = ktime_get_boottime();
+
 	clk_set_rate(c->hw.clk, clk_round_rate(c->hw.clk, rate));
 }
 
@@ -810,6 +828,8 @@ static int osm_cpufreq_cpu_init(struct cpufreq_policy *policy)
 		goto err;
 	}
 
+	policy->dvfs_possible_from_any_cpu = true;
+	policy->cpuinfo.transition_latency = RATE_LIMIT_US;
 	policy->driver_data = c;
 	return 0;
 
