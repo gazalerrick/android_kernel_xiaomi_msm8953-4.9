@@ -1,4 +1,4 @@
-/* Copyright (c) 2014, 2016-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014, 2016-2018, The Linux Foundation. All rights reserved
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -63,8 +63,9 @@ static void etm4_os_unlock(struct etmv4_drvdata *drvdata)
 
 static bool etm4_arch_supported(u8 arch)
 {
-	switch (arch) {
-	case ETM_ARCH_MAJOR_V4:
+	/* Mask out the minor version number */
+	switch (arch & 0xf0) {
+	case ETM_ARCH_V4:
 		break;
 	default:
 		return false;
