@@ -9,7 +9,7 @@
 # install package
 install-package --update-new openssl ccache bc bash git-core gnupg build-essential \
 	zip curl make automake autogen autoconf autotools-dev libtool shtool python \
-	m4 gcc libtool zlib1g-dev
+	m4 gcc libtool zlib1g-dev flex
 
 export KERNEL_NAME="aLn"
 export KERNEL_VERSION="CI"
